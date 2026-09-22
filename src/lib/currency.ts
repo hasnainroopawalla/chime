@@ -72,7 +72,14 @@ function getCompactCurrencyFormatter(
   );
 }
 
+function getEarningMilestoneTargets(currencyCode: CurrencyCode) {
+  return CURRENCIES[currencyCode].thousandsGroupStyle === "lakh"
+    ? [1_000, 10_000, 100_000, 10_000_000]
+    : [100, 1_000, 100_000, 1_000_000];
+}
+
 export const CurrencyUtils = {
   getCurrencyNumberFormat,
   getCompactCurrencyFormatter,
+  getEarningMilestoneTargets,
 };

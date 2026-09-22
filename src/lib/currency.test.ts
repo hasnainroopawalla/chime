@@ -98,6 +98,15 @@ describe.each(Object.values(CurrencyCode))("CurrencyUtils (%s)", (currency) => {
 
 describe("CurrencyUtils", () => {
   it.each([
+    [CurrencyCode.INR, [1_000, 10_000, 100_000, 10_000_000]],
+    [CurrencyCode.USD, [100, 1_000, 100_000, 1_000_000]],
+    [CurrencyCode.EUR, [100, 1_000, 100_000, 1_000_000]],
+    [CurrencyCode.GBP, [100, 1_000, 100_000, 1_000_000]],
+  ] as const)("returns earning milestones for %s", (currency, expected) => {
+    expect(CurrencyUtils.getEarningMilestoneTargets(currency)).toEqual(expected);
+  });
+
+  it.each([
     [CurrencyCode.INR, 100_000, "\u20b91L"],
     [CurrencyCode.INR, 10_000_000, "\u20b91Cr"],
     [CurrencyCode.INR, 15_000_000, "\u20b91.5Cr"],
