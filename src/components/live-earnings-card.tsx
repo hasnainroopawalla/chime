@@ -1,0 +1,127 @@
+import * as React from "react";
+import { ChartNoAxesCombined, RotateCcw } from "lucide-react";
+import { LiveAmount } from "@/components/live-amount";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { useElapsedTime } from "@/hooks/use-elapsed-time";
+import { useAnimatedNumber } from "@/hooks/use-animated-number";
+import { CurrencyCode, CurrencyUtils } from "@/lib/currency";
+
+const UPDATE_RATE_MS = 200;
+
+export function LiveEarningsCard({
+  incomePerSecond,
+  currencyCode,
+}: {
+  incomePerSecond: number;
+  currencyCode: CurrencyCode;
+}) {
+  const { elapsedSeconds, resetElapsedTime } = useElapsedTime();
+
+  const elapsedTime = [Math.floor(elapsedSeconds / 60), elapsedSeconds % 60]
+    .map((value) => String(value).padStart(2, "0"))
+    .join(":");
+
+  const { amount, resetAmount } = useUpdateAmount(incomePerSecond);
+  const animatedAmount = useAnimatedNumber(amount);
+
+  const compactFormatter = React.useMemo(
+    () => CurrencyUtils.getCompactCurrencyFormatter(currencyCode),
+    [currencyCode],
+  );
+
+  const compactAmount = React.useMemo(
+    () =>
+      Math.abs(animatedAmount) >= 1_000
+        ? compactFormatter
+            .formatToParts(animatedAmount)
+            .map(({ type, value }) =>
+              type === "compact" ? ` ${value}` : value,
+            )
+            .join("")
+        : null,
+    [animatedAmount, compactFormatter],
+  );
+
+  const resetLiveCounter = React.useCallback(() => {
+    resetElapsedTime();
+    resetAmount();
+  }, [resetElapsedTime, resetAmount]);
+
+  return (
+    <Card className="@container min-[1001px]:px-8 min-[1001px]:pb-5.25 row-start-2 min-[701px]:col-span-2 min-[701px]:col-start-1">
+      <div className="summary-heading flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="section-heading flex min-h-8 items-center gap-2.5">
+          <ChartNoAxesCombined
+            className="section-icon shrink-0 text-pop"
+            size={17}
+            strokeWidth={1.7}
+            aria-hidden="true"
+          />
+          <h2 className="text-[13px] font-[550] tracking-[-0.15px]">
+            Live Earnings
+          </h2>
+          <span
+            className="live-indicator size-2 shrink-0 rounded-full bg-emerald-500 motion-safe:animate-pulse motion-safe:animation-duration-[1.4s]"
+            aria-hidden="true"
+            title="Live preview"
+          />
+        </div>
+        <div className="ml-auto flex min-w-0 max-w-full items-center justify-end gap-2">
+          {compactAmount && (
+            <p
+              className="compact-amount min-w-0 text-right text-sm font-medium tracking-tight text-pop tabular-nums wrap-anywhere"
+              title="Rounded amount"
+            >
+              <span className="sr-only">Rounded amount: </span>
+              {compactAmount}
+            </p>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="amount-reset size-8 shrink-0 cursor-pointer text-muted-foreground hover:bg-pop-soft hover:text-pop dark:hover:bg-pop-soft"
+            onClick={resetLiveCounter}
+            aria-label="Reset elapsed time"
+            title="Reset elapsed time"
+          >
+            <RotateCcw aria-hidden="true" />
+          </Button>
+        </div>
+      </div>
+      <div className="annual-section flex items-center py-3">
+        <LiveAmount amount={animatedAmount} currencyCode={currencyCode} />
+      </div>
+      <p className="elapsed-time mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span>Elapsed</span>
+        <span aria-hidden="true">&middot;</span>
+        <time
+          className="tabular-nums"
+          dateTime={`PT${elapsedSeconds}S`}
+          aria-live="off"
+        >
+          {elapsedTime}
+        </time>
+      </p>
+    </Card>
+  );
+}
+
+function useUpdateAmount(incomePerSecond: number) {
+  const [amount, setAmount] = React.useState(0);
+
+  const resetAmount = React.useCallback(() => setAmount(0), []);
+
+  React.useEffect(() => {
+    const intervalId = setInterval(() => {
+      const delta = incomePerSecond / (1000 / UPDATE_RATE_MS);
+
+      setAmount((prevAmount) => prevAmount + delta);
+    }, UPDATE_RATE_MS);
+
+    return () => clearInterval(intervalId);
+  }, [incomePerSecond]);
+
+  return { amount, resetAmount };
+}
