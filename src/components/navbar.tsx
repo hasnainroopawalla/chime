@@ -3,6 +3,8 @@ import { Sun, Moon } from "lucide-react";
 import { GitHubIcon } from "./github-icon";
 import { useTheme } from "@/hooks/use-theme";
 
+const version = import.meta.env.VITE_APP_VERSION;
+
 export function Navbar() {
   const [theme, toggleTheme] = useTheme();
 
@@ -27,6 +29,12 @@ export function Navbar() {
         Chime
       </a>
       <div className="nav-actions flex items-center gap-2">
+        <span
+          className="shrink-0 rounded-md border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground tabular-nums"
+          title={`Version ${version}`}
+        >
+          v{version}
+        </span>
         <a
           href="https://github.com/hasnainroopawalla/chime"
           target="_blank"
